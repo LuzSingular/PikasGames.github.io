@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database - Central de Jogos</title>
+    <style>
+        /* Estilização Base - Tema Escuro */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #00d2ff;
+            margin-bottom: 5px;
+        }
+
+        p.subtitle {
+            color: #aaaaaa;
+            margin-bottom: 40px;
+        }
+
+        /* --- CONTAINER DO AGREGADOR (Centralizado) --- */
+        .aggregator-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        /* Grid dos sites */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* Cartão padrão */
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: #ffffff;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #333;
+            position: relative; 
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
+            border-color: #00d2ff;
+        }
+
+        /* Cartão Especial: Agregador (Maior e com destaque) */
+        .card-aggregator {
+            width: 260px;
+            background-color: #16213e; 
+            border: 2px solid #00d2ff;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.15);
+        }
+
+        .card-aggregator:hover {
+            transform: translateY(-5px) scale(1.05); 
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4);
+            border-color: #ffffff;
+        }
+
+        .card img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            background-color: #fff;
+            padding: 5px;
+            object-fit: contain;
+        }
+
+        .card span {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* --- O ÍCONE DA MOEDA ESTRANGEIRA --- */
+        .badge-dolar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ffaa00;
+            color: #1a180a;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* --- ABA: NÃO CONFIÁVEIS --- */
+        .untrusted-tab {
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 50px;
+            background-color: #1a0a0a; 
+            border: 1px solid #ff4444;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .untrusted-tab summary {
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff4444;
+            cursor: pointer;
+            text-align: center;
+            list-style: none; 
+            background-color: #2a1010;
+        }
+
+        .untrusted-tab summary:hover { background-color: #3a1515; }
+        
+        .tab-content { padding: 20px; }
+
+        .card-danger {
+            background-color: #2a1010;
+            border-color: #551515;
+        }
+
+        .card-danger:hover {
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3);
+            border-color: #ff4444;
+        }
+
+        .card-danger span {
+            text-decoration: line-through; 
+            color: #ff8888;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Central de Ofertas</h1>
+    <p class="subtitle">Agregador de preços e lojas verificadas</p>
+    
+    <div id="aggregator-container" class="aggregator-container"></div>
+
+    <div id="trusted-grid" class="grid"></div>
+
+    <details class="untrusted-tab">
+        <summary>⚠️ Lojas NÃO Confiáveis (Golpes/Suspeitas)</summary>
+        <div class="tab-content">
+            <div id="untrusted-grid" class="grid"></div>
+        </div>
+    </details>
+
+    <script>
+        // 1. O Agregador (Central)
+        const aggregatorSite = [
+            { name: "gg.deals", url: "https://gg.deals/" }
+        ];
+
+        // 2. Database de Sites CONFIÁVEIS
+        const trustedSites = [
+            { name: "Nuuvem", url: "https://www.nuuvem.com/" }, 
+            { name: "Green Man Gaming", url: "https://www.greenmangaming.com/" },
+            { name: "Humble Bundle", url: "https://www.humblebundle.com/", isEstrangeiro: true },
+            { name: "Voidu", url: "https://www.voidu.com/" },
+            { name: "GamersGate", url: "https://www.gamersgate.com/" },
+            { name: "CDKeys", url: "https://www.cdkeys.com/" },
+            { name: "Instant Gaming", url: "https://www.instant-gaming.com/" },
+            { name: "Yuplay", url: "https://www.yuplay.com/" },
+            { name: "Lootbar", url: "https://www.lootbar.com/" },
+            { name: "Driffle", url: "https://driffle.com/" }
+        ];
+
+        // 3. Lojas Não Confiáveis 
+        const untrustedSites = [
+            { name: "G2A", url: "https://www.g2a.com/" }, 
+            { name: "Kinguin", url: "https://www.kinguin.net/" },
+            { name: "Eneba", url: "https://www.eneba.com/" },
+            { name: "Gamivo", url: "https://www.gamivo.com/" },
+            { name: "K4G", url: "https://k4g.com/", isEstrangeiro: true },
+            { name: "Difmark", url: "https://difmark.com/" },
+            { name: "Gameseal", url: "https://gameseal.com/", isEstrangeiro: true },
+            { name: "PremiumCDKeys", url: "https://premiumcdkeys.com/", isEstrangeiro: true }
+        ];
+
+        function getDomain(url) {
+            return new URL(url).hostname;
+        }
+
+        function renderizarSites(listaDeSites, idDoContainer, themeClass = '') {
+            const grid = document.getElementById(idDoContainer);
+
+            listaDeSites.forEach(site => {
+                const card = document.createElement('a');
+                card.href = site.url;
+                card.target = '_blank';
+                card.className = `card ${themeClass}`;
+
+                const domain = getDomain(site.url);
+                const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+                // Monta a base do cartão com Loading Lazy
+                let conteudoDoCartao = `
+                    <img src="${iconUrl}" loading="lazy" alt="Ícone ${site.name}">
+                    <span>${site.name}</span>
+                `;
+
+                // Se for estrangeiro, adiciona a tag
+                if (site.isEstrangeiro === true) {
+                    conteudoDoCartao += `<div class="badge-dolar" title="Atenção: Compra Internacional (Dólar/Euro)">$</div>`;
+                }
+
+                card.innerHTML = conteudoDoCartao;
+                grid.appendChild(card);
+            });
+        }
+
+        // Renderiza o Agregador com a classe de destaque (Cai no container central)
+        renderizarSites(aggregatorSite, 'aggregator-container', 'card-aggregator');
+
+        // Renderiza as outras lojas
+        renderizarSites(trustedSites, 'trusted-grid'); 
+        renderizarSites(untrustedSites, 'untrusted-grid', 'card-danger'); 
+
+    </script>
+</body>
+</html>
